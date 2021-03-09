@@ -241,6 +241,71 @@ public class XmlEditor {
 	}
 
 	/**
+	 * 删除属性
+	 * 
+	 * @param tag
+	 * @param tagName
+	 * @param attrName
+	 */
+	public static void modifyResAttr(String tag, String tagName, String attrName, String attrValue) {
+		ParserChunkUtils.parserXml();
+		// 构造一个属性出来
+		int[] type = getAttrType(attrValue);
+		int attrname = getStrIndex(attrName);
+		int attrvalue = getStrIndex(attrValue);
+		int attruri = getStrIndex(prefixStr);
+		
+		int attrtype = type[0];// 属性类型
+		int attrdata = type[1];// 属性值，是int类型
+
+		AttributeData modifyData = AttributeData.createAttribute(attruri, attrname, attrvalue, attrtype, attrdata);
+		
+		for (StartTagChunk chunk : ParserChunkUtils.xmlStruct.startTagChunkList) {
+			int tagNameIndex = Utils.byte2int(chunk.name);
+			String tagNameTmp = ParserChunkUtils.xmlStruct.stringChunk.stringContentList.get(tagNameIndex);
+
+			if (tag.equals(tagNameTmp)) {
+
+				// 如果是application，manifest标签直接处理就好
+				if (tag.equals("application") || tag.equals("manifest")) {
+					for (AttributeData data : chunk.attrList) {
+						String attrNameTemp1 = ParserChunkUtils.xmlStruct.stringChunk.stringContentList.get(data.name);
+						if (attrName.equals(attrNameTemp1)) {
+							// 删除属性内容
+							int offsetStart = data.offset;
+							ParserChunkUtils.xmlStruct.byteSrc = Utils.replaceBytes(ParserChunkUtils.xmlStruct.byteSrc,
+									modifyData.getByte(), offsetStart);
+							return;
+						}
+					}
+				}
+
+				// 否则需要通过name找到指定的tag
+				for (AttributeData attrData : chunk.attrList) {
+					String attrNameTemp = ParserChunkUtils.xmlStruct.stringChunk.stringContentList.get(attrData.name);
+					if ("name".equals(attrNameTemp)) {// 得先找到tag对应的唯一名称
+						String value = ParserChunkUtils.xmlStruct.stringChunk.stringContentList
+								.get(attrData.valueString);
+						if (tagName.equals(value)) {
+							for (AttributeData data : chunk.attrList) {
+								String attrNameTemp1 = ParserChunkUtils.xmlStruct.stringChunk.stringContentList
+										.get(data.name);
+								if (attrName.equals(attrNameTemp1)) {
+									// 删除属性内容
+									int offsetStart = data.offset;
+									ParserChunkUtils.xmlStruct.byteSrc = Utils.replaceBytes(ParserChunkUtils.xmlStruct.byteSrc,
+											modifyData.getByte(), offsetStart);
+									return;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * 更改属性值
 	 * 
 	 * @param tag
@@ -249,10 +314,16 @@ public class XmlEditor {
 	 * @param attrValue
 	 */
 	public static void modifyAttr(String tag, String tagName, String attrName, String attrValue) {
-		ParserChunkUtils.parserXml();
-		XmlEditor.removeAttr(tag, tagName, attrName);
-		ParserChunkUtils.parserXml();
-		XmlEditor.addAttr(tag, tagName, attrName, attrValue);
+		System.out.println("tag : " + tag + " , tagName : " + tagName + " , attrName : " + attrName + " , attrValue : "
+				+ attrValue);
+		if (attrValue != null && (attrValue.startsWith("@") || attrValue.startsWith("#"))) {
+			modifyResAttr(tag, tagName, attrName, attrValue);
+		} else {
+			ParserChunkUtils.parserXml();
+			XmlEditor.removeAttr(tag, tagName, attrName);
+			ParserChunkUtils.parserXml();
+			XmlEditor.addAttr(tag, tagName, attrName, attrValue);
+		}
 	}
 
 	/**
