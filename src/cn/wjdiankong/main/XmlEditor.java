@@ -352,7 +352,6 @@ public class XmlEditor {
             int tagNameIndex = Utils.byte2int(chunk.name);
             String tagNameTmp = ParserChunkUtils.xmlStruct.stringChunk.stringContentList.get(tagNameIndex);
             if (tag.equals(tagNameTmp)) {
-
                 // 如果是application，manifest标签直接处理就好
                 if (tag.equals("application") || tag.equals("manifest")) {
                     // 还得修改对应的tag chunk中属性个个数和大小
@@ -368,9 +367,12 @@ public class XmlEditor {
                     ParserChunkUtils.xmlStruct.byteSrc = Utils.replaceBytes(ParserChunkUtils.xmlStruct.byteSrc,
                             modifyByteSize, chunkSizeStart);
 
-                    // 添加属性内容到原来的chunk上
+                    // 在标签[[末尾]]添加属性内容到原来的chunk上，添加某些字符串属性时，不生效
                     ParserChunkUtils.xmlStruct.byteSrc = Utils.insertByte(ParserChunkUtils.xmlStruct.byteSrc,
-                            chunk.offset + chunkSize, data.getByte());
+                        chunk.offset + chunkSize, data.getByte());
+                    // 在标签[[头部]]添加属性内容到原来的chunk上
+                    // ParserChunkUtils.xmlStruct.byteSrc = Utils.insertByte(ParserChunkUtils.xmlStruct.byteSrc,
+                    //         chunk.offset + chunkSize - chunk.attrList.size() * 20, data.getByte());
 
                     modifStringChunk();
 
