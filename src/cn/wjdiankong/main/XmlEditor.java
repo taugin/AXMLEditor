@@ -2,6 +2,8 @@ package cn.wjdiankong.main;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -341,7 +343,7 @@ public class XmlEditor {
         int attrname = getStrIndex(attrName);
         int attrvalue = getStrIndex(attrValue);
         int attruri = getStrIndex(prefixStr);
-        ;
+
         int attrtype = type[0];// 属性类型
         int attrdata = type[1];// 属性值，是int类型
 
@@ -354,6 +356,7 @@ public class XmlEditor {
             if (tag.equals(tagNameTmp)) {
                 // 如果是application，manifest标签直接处理就好
                 if (tag.equals("application") || tag.equals("manifest")) {
+                    // printStartTagChunk(tagNameTmp, chunk.attrList);
                     // 还得修改对应的tag chunk中属性个个数和大小
                     int countStart = chunk.offset + 28;
                     byte[] modifyByte = Utils.int2Byte(chunk.attrList.size() + 1);
@@ -369,10 +372,11 @@ public class XmlEditor {
 
                     // 在标签[[末尾]]添加属性内容到原来的chunk上，添加某些字符串属性时，不生效
                     ParserChunkUtils.xmlStruct.byteSrc = Utils.insertByte(ParserChunkUtils.xmlStruct.byteSrc,
-                        chunk.offset + chunkSize, data.getByte());
+                            chunk.offset + chunkSize, data.getByte());
                     // 在标签[[头部]]添加属性内容到原来的chunk上
-                    // ParserChunkUtils.xmlStruct.byteSrc = Utils.insertByte(ParserChunkUtils.xmlStruct.byteSrc,
-                    //         chunk.offset + chunkSize - chunk.attrList.size() * 20, data.getByte());
+                    // ParserChunkUtils.xmlStruct.byteSrc =
+                    // Utils.insertByte(ParserChunkUtils.xmlStruct.byteSrc,
+                    // chunk.offset + chunkSize - chunk.attrList.size() * 20, data.getByte());
 
                     modifStringChunk();
 
@@ -412,6 +416,16 @@ public class XmlEditor {
             }
         }
 
+    }
+
+    private static void printStartTagChunk(String tag, List<AttributeData> attrList) {
+        System.out.println("tag : " + tag);
+        for (AttributeData a : attrList) {
+            System.out.println(
+                    "\t" + "namespace uri : " + a.getNameSpaceUri() + " , name : " + a.getName() + " , value : "
+                            + a.getData() + " , type : " + Integer.toHexString(a.type).toUpperCase(Locale.getDefault())
+                            + " , data : " + Integer.toHexString(a.data).toUpperCase(Locale.getDefault()));
+        }
     }
 
     /**
