@@ -243,11 +243,12 @@ public class XmlEditor {
     }
 
     /**
-     * 删除属性
-     * 
+         * 修改属性，通过替换整个属性二进制区域，目前有问题，弃用
      * @param tag
      * @param tagName
      * @param attrName
+     * @param attrValue
+     * @deprecated
      */
     public static void modifyResAttr(String tag, String tagName, String attrName, String attrValue) {
         ParserChunkUtils.parserXml();
@@ -308,6 +309,41 @@ public class XmlEditor {
     }
 
     /**
+         * 修改属性，直接找到放置属性值的区域，替換修改的值
+     * @param tag
+     * @param tagName
+     * @param attrName
+     * @param attrValue
+     */
+    public static void modifyResAttr2(String tag, String tagName, String attrName, String attrValue) {
+        ParserChunkUtils.parserXml();
+        if (attrValue != null) {
+            if (attrValue.startsWith("@") || attrValue.startsWith("#")) {
+                attrValue = attrValue.substring(1);
+            }
+        }
+        int attrdata = Integer.valueOf(attrValue, 16).intValue();// 属性值，是int类型
+        for (StartTagChunk chunk : ParserChunkUtils.xmlStruct.startTagChunkList) {
+            int tagNameIndex = Utils.byte2int(chunk.name);
+            String tagNameTmp = ParserChunkUtils.xmlStruct.stringChunk.stringContentList.get(tagNameIndex);
+            if (tag.equals(tagNameTmp)) {
+                // 如果是application，manifest标签直接处理就好
+                if (tag.equals("application") || tag.equals("manifest")) {
+                    for (AttributeData data : chunk.attrList) {
+                        String attrNameTemp1 = ParserChunkUtils.xmlStruct.stringChunk.stringContentList.get(data.name);
+                        if (attrName.equals(attrNameTemp1)) {
+                            // 删除属性内容
+                            int offsetStart = data.offset;
+                            ParserChunkUtils.xmlStruct.byteSrc = Utils.replaceBytes(ParserChunkUtils.xmlStruct.byteSrc,
+                                    Utils.int2Byte(attrdata), offsetStart + 16);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    /**
      * 更改属性值
      * 
      * @param tag
@@ -319,7 +355,7 @@ public class XmlEditor {
         System.out.println("tag : " + tag + " , tagName : " + tagName + " , attrName : " + attrName + " , attrValue : "
                 + attrValue);
         if (attrValue != null && (attrValue.startsWith("@") || attrValue.startsWith("#"))) {
-            modifyResAttr(tag, tagName, attrName, attrValue);
+            modifyResAttr2(tag, tagName, attrName, attrValue);
         } else {
             ParserChunkUtils.parserXml();
             XmlEditor.removeAttr(tag, tagName, attrName);
